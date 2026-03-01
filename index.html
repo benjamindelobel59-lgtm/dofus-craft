@@ -515,10 +515,21 @@ function load() {
   return [...DEFAULT];
 }
 function persist() { localStorage.setItem('dofus_v5', JSON.stringify(recipes)); }
+function persistSession() {
+  localStorage.setItem('dofus_session', JSON.stringify({ queue, bank }));
+}
+function loadSession() {
+  try {
+    const s = localStorage.getItem('dofus_session');
+    if (s) { const d = JSON.parse(s); return { queue: d.queue||[], bank: d.bank||{} }; }
+  } catch(e) {}
+  return { queue: [], bank: {} };
+}
 
 let recipes = load();
-let queue   = []; // [{id,qty}]
-let bank    = {}; // {resourceName: qty}
+const _session = loadSession();
+let queue   = _session.queue;
+let bank    = _session.bank;
 let editingId = null;
 
 // ═══════════════════════════════════════════════
@@ -591,6 +602,7 @@ function toggleItem(id) {
   queue.push({id, qty:1});
   renderQueue();
   renderItemGrid();
+  persistSession();
   showToast('✅ Ajouté à la file !');
 }
 
@@ -630,12 +642,12 @@ function renderQueue() {
   }).join('');
 }
 
-function chQ(i,d){queue[i].qty=Math.max(1,(queue[i].qty||1)+d);renderQueue();renderItemGrid();}
-function setQ(i,v){queue[i].qty=Math.max(1,parseInt(v)||1);renderItemGrid();}
-function rmQ(i){queue.splice(i,1);renderQueue();renderItemGrid();}
+function chQ(i,d){queue[i].qty=Math.max(1,(queue[i].qty||1)+d);renderQueue();renderItemGrid();persistSession();}
+function setQ(i,v){queue[i].qty=Math.max(1,parseInt(v)||1);renderItemGrid();persistSession();}
+function rmQ(i){queue.splice(i,1);renderQueue();renderItemGrid();persistSession();}
 
 function clearQueue() {
-  queue=[];bank={};renderQueue();renderItemGrid();
+  queue=[];bank={};renderQueue();renderItemGrid();persistSession();
   document.getElementById('res-out').innerHTML=`<div class="empty"><div class="empty-i">🪄</div><p>Sélectionne des items puis clique sur Calculer</p></div>`;
   document.getElementById('res-count').textContent='0';
 }
@@ -719,6 +731,7 @@ function renderTable(entries) {
 
 function upBank(name, val) {
   bank[name] = Math.max(0, parseInt(val)||0);
+  persistSession();
   document.querySelectorAll('#res-tbody tr').forEach(tr => {
     const nm = tr.querySelector('.rname');
     if (!nm || nm.textContent!==name) return;
@@ -870,6 +883,10 @@ function deleteRecipe(id) {
   recipes=recipes.filter(x=>x.id!==id);
   queue=queue.filter(q=>q.id!==id);
   persist(); renderAdminList(); renderItemGrid(); renderQueue();
+// If queue was restored from session, show a toast
+if (queue.length > 0) {
+  showToast('🔄 Session restaurée (' + queue.length + ' item(s) en file)');
+}
   showToast('Recette supprimée');
 }
 
@@ -895,7 +912,11 @@ function saveRecipe() {
     recipes.push({id:'r_'+Date.now(),name,img,type,ingredients});
     showToast('✅ Recette ajoutée !');
   }
-  persist(); renderAdminList(); renderItemGrid(); renderQueue(); resetForm();
+  persist(); renderAdminList(); renderItemGrid(); renderQueue();
+// If queue was restored from session, show a toast
+if (queue.length > 0) {
+  showToast('🔄 Session restaurée (' + queue.length + ' item(s) en file)');
+} resetForm();
 }
 
 function renderAdminList() {
@@ -931,6 +952,10 @@ function showToast(msg, err=false) {
 //  INIT
 // ═══════════════════════════════════════════════
 renderItemGrid(); renderQueue();
+// If queue was restored from session, show a toast
+if (queue.length > 0) {
+  showToast('🔄 Session restaurée (' + queue.length + ' item(s) en file)');
+}
 </script>
 </body>
 </html>
