@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dofus Craft Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #060810;
+    --bg-card: #0d1117;
+    --bg-panel: #111827;
+    --bg-hover: #1a2333;
+    --border: #1e2d45;
+    --border-glow: #f5a623;
+    --neon-gold: #f5a623;
+    --neon-gold-dim: rgba(245,166,35,0.15);
+    --neon-teal: #00e5ff;
+    --neon-teal-dim: rgba(0,229,255,0.1);
+    --text-primary: #e8e0d0;
+    --text-secondary: #8a9ab5;
+    --text-muted: #4a5568;
+    --red: #ff4757;
+    --green: #2ed573;
+    --scroll-glow: rgba(245,166,35,0.05);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content:'';
+    position:fixed;
+    inset:0;
+    background-image:
+      linear-gradient(rgba(245,166,35,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,166,35,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  body::after {
+    content:'';
+    position:fixed;
+    top:-50%;
+    left:-50%;
+    width:200%;
+    height:200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(245,166,35,0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(0,229,255,0.03) 0%, transparent 50%);
+    pointer-events:none;
+    z-index:0;
+    animation: driftBg 20s ease-in-out infinite alternate;
+  }
+
+  @keyframes driftBg {
+    from { transform: translate(0,0) rotate(0deg); }
+    to { transform: translate(2%, 2%) rotate(1deg); }
+  }
+
+  /* ── Header ── */
+  header {
+    position:relative;
+    z-index:10;
+    text-align:center;
+    padding: 40px 20px 30px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(245,166,35,0.06) 0%, transparent 100%);
+  }
+
+  .logo-wrap {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    margin-bottom:8px;
+  }
+
+  .logo-icon {
+    width:42px; height:42px;
+    background: var(--neon-gold);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px;
+    box-shadow: 0 0 20px rgba(245,166,35,0.6);
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 20px rgba(245,166,35,0.6); }
+    50% { box-shadow: 0 0 40px rgba(245,166,35,0.9), 0 0 60px rgba(245,166,35,0.3); }
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    font-weight:900;
+    letter-spacing:3px;
+    background: linear-gradient(135deg, #f5a623, #ffe082, #f5a623);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+  }
+
+  .subtitle {
+    font-size:13px;
+    color: var(--text-muted);
+    letter-spacing:4px;
+    text-transform:uppercase;
+    margin-top:4px;
+  }
+
+  /* ── Nav Tabs ── */
+  .tabs {
+    display:flex;
+    justify-content:center;
+    gap:4px;
+    padding:16px 20px 0;
+    position:relative;
+    z-index:10;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-deep);
+  }
+
+  .tab-btn {
+    font-family:'Rajdhani', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    padding:10px 28px;
+    background:transparent;
+    border:none;
+    color: var(--text-muted);
+    cursor:pointer;
+    position:relative;
+    transition: color 0.2s;
+  }
+
+  .tab-btn::after {
+    content:'';
+    position:absolute;
+    bottom:0; left:50%; right:50%;
+    height:2px;
+    background: var(--neon-gold);
+    transition: left 0.3s, right 0.3s;
+    box-shadow: 0 0 8px var(--neon-gold);
+  }
+
+  .tab-btn.active {
+    color: var(--neon-gold);
+  }
+
+  .tab-btn.active::after {
+    left:0; right:0;
+  }
+
+  .tab-btn:hover { color: var(--text-primary); }
+
+  /* ── Layout ── */
+  .container {
+    max-width:1300px;
+    margin:0 auto;
+    padding:30px 20px;
+    position:relative;
+    z-index:10;
+  }
+
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+
+  /* ── Craft Tab ── */
+  .craft-layout {
+    display:grid;
+    grid-template-columns: 1fr 380px;
+    gap:24px;
+  }
+
+  @media(max-width:900px) {
+    .craft-layout { grid-template-columns:1fr; }
+  }
+
+  /* Panel */
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+    position:relative;
+  }
+
+  .panel::before {
+    content:'';
+    position:absolute;
+    top:0; left:0; right:0;
+    height:2px;
+    background: linear-gradient(90deg, transparent, var(--neon-gold), transparent);
+  }
+
+  .panel-header {
+    padding:16px 20px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background: rgba(245,166,35,0.03);
+  }
+
+  .panel-title {
+    font-family:'Cinzel', serif;
+    font-size:13px;
+    letter-spacing:2px;
+    color: var(--neon-gold);
+    text-transform:uppercase;
+  }
+
+  .panel-body { padding:20px; }
+
+  /* ── Item Selector ── */
+  .search-wrap {
+    position:relative;
+    margin-bottom:16px;
+  }
+
+  .search-wrap input {
+    width:100%;
+    padding:11px 16px 11px 42px;
+    background: var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    color: var(--text-primary);
+    font-family:'Rajdhani', sans-serif;
+    font-size:15px;
+    outline:none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .search-wrap input:focus {
+    border-color: var(--neon-gold);
+    box-shadow: 0 0 0 3px var(--neon-gold-dim), 0 0 20px rgba(245,166,35,0.1);
+  }
+
+  .search-icon {
+    position:absolute;
+    left:14px; top:50%;
+    transform:translateY(-50%);
+    color: var(--text-muted);
+    font-size:16px;
+  }
+
+  /* Item Grid */
+  .item-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap:10px;
+    max-height:420px;
+    overflow-y:auto;
+    padding-right:4px;
+  }
+
+  .item-grid::-webkit-scrollbar { width:4px; }
+  .item-grid::-webkit-scrollbar-track { background:var(--bg-panel); }
+  .item-grid::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+  .item-card {
+    background: var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px 10px;
+    cursor:pointer;
+    text-align:center;
+    transition: all 0.2s;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .item-card:hover {
+    border-color: var(--neon-gold);
+    background: var(--neon-gold-dim);
+    transform:translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  }
+
+  .item-card.selected {
+    border-color: var(--neon-teal);
+    background: var(--neon-teal-dim);
+    box-shadow: 0 0 12px rgba(0,229,255,0.2);
+  }
+
+  .item-card .item-emoji { font-size:28px; display:block; margin-bottom:6px; }
+  .item-card .item-name {
+    font-size:12px;
+    font-weight:600;
+    color: var(--text-secondary);
+    line-height:1.3;
+  }
+
+  /* Craft Queue */
+  .queue-list {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    max-height:340px;
+    overflow-y:auto;
+  }
+
+  .queue-list::-webkit-scrollbar { width:4px; }
+  .queue-list::-webkit-scrollbar-track { background:var(--bg-panel); }
+  .queue-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+  .queue-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background: var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 14px;
+    animation: slideIn 0.25s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity:0; transform:translateX(-10px); }
+    to { opacity:1; transform:translateX(0); }
+  }
+
+  .queue-item .q-emoji { font-size:22px; flex-shrink:0; }
+
+  .queue-item .q-name {
+    flex:1;
+    font-weight:600;
+    font-size:14px;
+    color: var(--text-primary);
+  }
+
+  .qty-control {
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+
+  .qty-btn {
+    width:26px; height:26px;
+    background: var(--bg-hover);
+    border:1px solid var(--border);
+    border-radius:6px;
+    color: var(--text-secondary);
+    font-size:16px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition: all 0.15s;
+    line-height:1;
+  }
+
+  .qty-btn:hover {
+    border-color: var(--neon-gold);
+    color: var(--neon-gold);
+  }
+
+  .qty-input {
+    width:46px;
+    text-align:center;
+    background: var(--bg-deep);
+    border:1px solid var(--border);
+    border-radius:6px;
+    color: var(--neon-gold);
+    font-family:'Rajdhani', sans-serif;
+    font-size:14px;
+    font-weight:700;
+    padding:3px 4px;
+    outline:none;
+  }
+
+  .qty-input:focus { border-color: var(--neon-gold); }
+
+  .remove-btn {
+    background:none;
+    border:none;
+    color: var(--text-muted);
+    cursor:pointer;
+    font-size:16px;
+    padding:4px;
+    transition: color 0.15s;
+    line-height:1;
+  }
+  .remove-btn:hover { color: var(--red); }
+
+  /* ── Action Buttons ── */
+  .action-bar {
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+    flex-wrap:wrap;
+  }
+
+  .btn {
+    font-family:'Rajdhani', sans-serif;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    padding:10px 22px;
+    border-radius:8px;
+    cursor:pointer;
+    border:none;
+    transition: all 0.2s;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #f5a623, #e8940f);
+    color: #060810;
+    box-shadow: 0 0 20px rgba(245,166,35,0.3);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 0 30px rgba(245,166,35,0.6);
+    transform:translateY(-1px);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border:1px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--neon-gold);
+    color: var(--neon-gold);
+  }
+
+  .btn-danger {
+    background:transparent;
+    border:1px solid rgba(255,71,87,0.3);
+    color: var(--red);
+  }
+
+  .btn-danger:hover {
+    background: rgba(255,71,87,0.1);
+    border-color: var(--red);
+  }
+
+  /* ── Resources Result ── */
+  .resources-panel {
+    margin-top:24px;
+  }
+
+  .resource-list {
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap:10px;
+    margin-top:16px;
+  }
+
+  .resource-row {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background: var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 14px;
+    transition: border-color 0.2s;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(6px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  .resource-row:hover { border-color: rgba(245,166,35,0.3); }
+
+  .res-emoji { font-size:20px; flex-shrink:0; }
+
+  .res-info { flex:1; }
+  .res-name { font-size:13px; color: var(--text-secondary); font-weight:500; }
+  .res-qty {
+    font-size:18px;
+    font-weight:700;
+    color: var(--neon-gold);
+    font-family:'Cinzel', serif;
+  }
+
+  .empty-state {
+    text-align:center;
+    padding:40px 20px;
+    color: var(--text-muted);
+  }
+
+  .empty-state .empty-icon { font-size:48px; margin-bottom:12px; opacity:0.4; }
+  .empty-state p { font-size:14px; letter-spacing:1px; }
+
+  /* ── Admin Tab ── */
+  .admin-layout {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+  }
+
+  @media(max-width:800px) {
+    .admin-layout { grid-template-columns:1fr; }
+  }
+
+  .form-group { margin-bottom:14px; }
+
+  label {
+    display:block;
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color: var(--text-muted);
+    margin-bottom:6px;
+  }
+
+  input[type="text"], input[type="number"], select, textarea {
+    width:100%;
+    padding:10px 14px;
+    background: var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    color: var(--text-primary);
+    font-family:'Rajdhani', sans-serif;
+    font-size:14px;
+    outline:none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+    border-color: var(--neon-gold);
+    box-shadow: 0 0 0 3px var(--neon-gold-dim);
+  }
+
+  select option { background: var(--bg-panel); }
+
+  textarea { resize:vertical; min-height:80px; line-height:1.5; }
+
+  .ingredients-builder {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-bottom:10px;
+  }
+
+  .ingredient-row {
+    display:flex;
+    gap:8px;
+    align-items:center;
+    animation: slideIn 0.2s ease;
+  }
+
+  .ingredient-row input[type="text"] { flex:1; }
+  .ingredient-row input[type="number"] { width:80px; flex-shrink:0; }
+
+  .del-ing-btn {
+    background:none;
+    border:1px solid rgba(255,71,87,0.3);
+    border-radius:6px;
+    color: var(--red);
+    cursor:pointer;
+    width:32px; height:32px;
+    font-size:16px;
+    display:flex; align-items:center; justify-content:center;
+    transition: all 0.15s;
+    flex-shrink:0;
+  }
+
+  .del-ing-btn:hover { background: rgba(255,71,87,0.1); }
+
+  .add-ing-btn {
+    font-family:'Rajdhani', sans-serif;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color: var(--neon-teal);
+    background:none;
+    border:1px dashed rgba(0,229,255,0.3);
+    border-radius:6px;
+    padding:7px 14px;
+    cursor:pointer;
+    width:100%;
+    transition: all 0.2s;
+  }
+
+  .add-ing-btn:hover {
+    background: var(--neon-teal-dim);
+    border-color: var(--neon-teal);
+  }
+
+  /* Recipe list in admin */
+  .recipe-list-admin {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-height:600px;
+    overflow-y:auto;
+    padding-right:4px;
+  }
+
+  .recipe-list-admin::-webkit-scrollbar { width:4px; }
+  .recipe-list-admin::-webkit-scrollbar-track { background:var(--bg-panel); }
+  .recipe-list-admin::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+  .recipe-admin-card {
+    background: var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px 14px;
+    cursor:pointer;
+    transition: all 0.2s;
+  }
+
+  .recipe-admin-card:hover {
+    border-color: var(--neon-gold);
+    background: var(--neon-gold-dim);
+  }
+
+  .recipe-admin-card .ra-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:4px;
+  }
+
+  .recipe-admin-card .ra-name {
+    font-weight:700;
+    font-size:14px;
+    display:flex; align-items:center; gap:8px;
+  }
+
+  .ra-actions { display:flex; gap:6px; }
+
+  .icon-btn {
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-size:14px;
+    padding:4px 6px;
+    border-radius:4px;
+    transition: all 0.15s;
+    color: var(--text-muted);
+  }
+
+  .icon-btn:hover { background: var(--bg-hover); }
+  .icon-btn.del:hover { color: var(--red); }
+  .icon-btn.edit-b:hover { color: var(--neon-gold); }
+
+  .ra-count { font-size:11px; color: var(--text-muted); letter-spacing:1px; }
+
+  /* Toast */
+  #toast {
+    position:fixed;
+    bottom:30px; right:30px;
+    z-index:1000;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .toast-msg {
+    background: var(--bg-panel);
+    border:1px solid var(--neon-gold);
+    border-left:4px solid var(--neon-gold);
+    border-radius:8px;
+    padding:12px 18px;
+    font-size:13px;
+    font-weight:600;
+    color: var(--text-primary);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s both;
+    min-width:220px;
+    letter-spacing:.5px;
+  }
+
+  .toast-msg.error { border-color: var(--red); }
+
+  @keyframes toastIn {
+    from { opacity:0; transform:translateY(10px) scale(.96); }
+    to { opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  @keyframes toastOut {
+    to { opacity:0; transform:translateY(6px) scale(.96); }
+  }
+
+  /* Badges */
+  .badge {
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:20px;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:1px;
+    text-transform:uppercase;
+  }
+
+  .badge-gold { background: rgba(245,166,35,0.15); color: var(--neon-gold); border:1px solid rgba(245,166,35,0.3); }
+  .badge-teal { background: rgba(0,229,255,0.1); color: var(--neon-teal); border:1px solid rgba(0,229,255,0.3); }
+
+  /* Export excel row */
+  .export-row {
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+
+  /* Glow divider */
+  .glow-divider {
+    height:1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin:20px 0;
+  }
+
+  .qty-badge {
+    background: var(--neon-gold-dim);
+    border:1px solid rgba(245,166,35,0.3);
+    border-radius:4px;
+    padding:2px 7px;
+    font-size:12px;
+    color: var(--neon-gold);
+    font-weight:700;
+    min-width:34px;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo-wrap">
+    <div class="logo-icon">⚗️</div>
+    <h1>Craft Manager</h1>
+  </div>
+  <p class="subtitle">Dofus · Gestionnaire de Recettes</p>
+</header>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('craft')">⚔️ &nbsp;Craft</button>
+  <button class="tab-btn" onclick="switchTab('admin')">⚙️ &nbsp;Admin</button>
+</div>
+
+<!-- CRAFT TAB -->
+<div class="container">
+  <div id="tab-craft" class="tab-content active">
+    <div class="craft-layout">
+
+      <!-- Left: item selector + results -->
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">📦 Items Craftables</span>
+            <span class="badge badge-gold" id="item-count">0 recettes</span>
+          </div>
+          <div class="panel-body">
+            <div class="search-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="item-search" placeholder="Rechercher un item..." oninput="renderItemGrid()">
+            </div>
+            <div class="item-grid" id="item-grid">
+              <!-- populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Resources -->
+        <div class="resources-panel">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">🧮 Ressources Nécessaires</span>
+              <span class="badge badge-teal" id="res-count">0 ressource</span>
+            </div>
+            <div class="panel-body">
+              <div id="resource-output">
+                <div class="empty-state">
+                  <div class="empty-icon">🪄</div>
+                  <p>Sélectionne des items et clique sur Calculer</p>
+                </div>
+              </div>
+              <div class="action-bar" style="margin-top:16px;" id="export-bar" style="display:none">
+                <button class="btn btn-ghost" onclick="exportExcel()">📊 &nbsp;Exporter Excel</button>
+                <button class="btn btn-ghost" onclick="copyToClipboard()">📋 &nbsp;Copier</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: craft queue -->
+      <div>
+        <div class="panel" style="position:sticky;top:20px;">
+          <div class="panel-header">
+            <span class="panel-title">🛒 File de Craft</span>
+            <span class="badge badge-teal" id="queue-count">0 item</span>
+          </div>
+          <div class="panel-body">
+            <div class="queue-list" id="queue-list">
+              <div class="empty-state">
+                <div class="empty-icon">🎒</div>
+                <p>Clique sur un item pour l'ajouter</p>
+              </div>
+            </div>
+            <div class="glow-divider"></div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="btn btn-primary" onclick="calculate()" style="width:100%;justify-content:center;">⚗️ &nbsp;Calculer</button>
+              <button class="btn btn-danger" onclick="clearQueue()" style="width:100%;justify-content:center;">🗑️ &nbsp;Vider la file</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ADMIN TAB -->
+  <div id="tab-admin" class="tab-content">
+    <div class="admin-layout">
+
+      <!-- Add/Edit form -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title" id="form-title">➕ Nouvelle Recette</span>
+        </div>
+        <div class="panel-body">
+          <div class="form-group">
+            <label>Nom de l'item</label>
+            <input type="text" id="f-name" placeholder="ex: Cature">
+          </div>
+          <div class="form-group">
+            <label>Emoji / Icône</label>
+            <input type="text" id="f-emoji" placeholder="ex: 🌵" maxlength="4">
+          </div>
+          <div class="form-group">
+            <label>Catégorie</label>
+            <input type="text" id="f-cat" placeholder="ex: Équipement, Consommable...">
+          </div>
+          <div class="form-group">
+            <label>Ingrédients</label>
+            <div class="ingredients-builder" id="ing-builder"></div>
+            <button class="add-ing-btn" onclick="addIngRow()">+ Ajouter un ingrédient</button>
+          </div>
+          <div class="action-bar">
+            <button class="btn btn-primary" onclick="saveRecipe()">💾 &nbsp;Sauvegarder</button>
+            <button class="btn btn-ghost" onclick="resetForm()">✖️ &nbsp;Annuler</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recipe list -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📜 Recettes enregistrées</span>
+          <span class="badge badge-gold" id="admin-count">0</span>
+        </div>
+        <div class="panel-body">
+          <div class="recipe-list-admin" id="recipe-list-admin">
+            <!-- populated by JS -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════
+const DEFAULT_RECIPES = [
+  {
+    id: 'cature',
+    name: 'Cature',
+    emoji: '🌵',
+    category: 'Équipement',
+    ingredients: [
+      { name:'Parchemin de Cactana', qty:26 },
+      { name:'String de Pampactus', qty:26 },
+      { name:'Jus de Cacterre', qty:7 },
+      { name:'Koinkoin de bain de Nagate', qty:4 },
+      { name:'Duvet du Maître Corbac', qty:3 },
+      { name:'Trame Dimensionnelle', qty:3 },
+      { name:'Substrat de Forêt', qty:1 },
+      { name:'Étoile d\'Or d\'El Piko', qty:1 },
+    ]
+  }
+];
+
+// Resource emojis map (auto-guess)
+const EMOJI_MAP = {
+  'parchemin':'📜','string':'🧵','jus':'🥤','koinkoin':'💰','duvet':'🪶',
+  'trame':'🕸️','substrat':'🌱','étoile':'⭐','minerai':'⛏️','bois':'🪵',
+  'cuir':'🟫','potion':'🧪','pierre':'💎','fragment':'🔷','larme':'💧',
+  'os':'🦴','poil':'🐾','oeil':'👁️','corne':'🦌','patte':'🐾',
+  'plume':'🪶','aile':'🦋','gemme':'💎','poudre':'✨','essai':'🧬',
+  'herbe':'🌿','champignon':'🍄','fibre':'🧶','graine':'🌰','racine':'🪴',
+};
+
+function guessEmoji(name) {
+  const lower = name.toLowerCase();
+  for (const [key, emoji] of Object.entries(EMOJI_MAP)) {
+    if (lower.includes(key)) return emoji;
+  }
+  return '📦';
+}
+
+// Load/save
+function loadRecipes() {
+  try {
+    const saved = localStorage.getItem('dofus_recipes');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return [...DEFAULT_RECIPES];
+}
+
+function saveRecipes(recipes) {
+  localStorage.setItem('dofus_recipes', JSON.stringify(recipes));
+}
+
+let recipes = loadRecipes();
+let queue = []; // [{id, qty}]
+let editingId = null;
+
+// ══════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+  if (tab === 'admin') renderAdminList();
+}
+
+// ══════════════════════════════════════════════
+//  CRAFT TAB
+// ══════════════════════════════════════════════
+function renderItemGrid() {
+  const q = document.getElementById('item-search').value.toLowerCase();
+  const grid = document.getElementById('item-grid');
+  const filtered = recipes.filter(r => r.name.toLowerCase().includes(q));
+
+  document.getElementById('item-count').textContent = recipes.length + ' recette' + (recipes.length !== 1 ? 's' : '');
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><p>Aucun item trouvé</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(r => {
+    const inQueue = queue.find(q => q.id === r.id);
+    return `<div class="item-card ${inQueue ? 'selected' : ''}" onclick="toggleItem('${r.id}')">
+      <span class="item-emoji">${r.emoji || '📦'}</span>
+      <span class="item-name">${r.name}</span>
+      ${inQueue ? `<div style="margin-top:5px"><span class="badge badge-teal">×${inQueue.qty}</span></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function toggleItem(id) {
+  const idx = queue.findIndex(q => q.id === id);
+  if (idx >= 0) {
+    queue.splice(idx, 1);
+  } else {
+    queue.push({ id, qty: 1 });
+  }
+  renderItemGrid();
+  renderQueue();
+}
+
+function renderQueue() {
+  const list = document.getElementById('queue-list');
+  document.getElementById('queue-count').textContent = queue.length + ' item' + (queue.length !== 1 ? 's' : '');
+
+  if (queue.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🎒</div><p>Clique sur un item pour l'ajouter</p></div>`;
+    return;
+  }
+
+  list.innerHTML = queue.map((q, i) => {
+    const recipe = recipes.find(r => r.id === q.id);
+    if (!recipe) return '';
+    return `<div class="queue-item">
+      <span class="q-emoji">${recipe.emoji || '📦'}</span>
+      <span class="q-name">${recipe.name}</span>
+      <div class="qty-control">
+        <button class="qty-btn" onclick="changeQty(${i}, -1)">−</button>
+        <input class="qty-input" type="number" min="1" value="${q.qty}" onchange="setQty(${i}, this.value)">
+        <button class="qty-btn" onclick="changeQty(${i}, 1)">+</button>
+      </div>
+      <button class="remove-btn" onclick="removeFromQueue(${i})" title="Retirer">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function changeQty(i, delta) {
+  queue[i].qty = Math.max(1, (queue[i].qty || 1) + delta);
+  renderQueue();
+  renderItemGrid();
+}
+
+function setQty(i, val) {
+  queue[i].qty = Math.max(1, parseInt(val) || 1);
+  renderItemGrid();
+}
+
+function removeFromQueue(i) {
+  queue.splice(i, 1);
+  renderQueue();
+  renderItemGrid();
+}
+
+function clearQueue() {
+  queue = [];
+  renderQueue();
+  renderItemGrid();
+  document.getElementById('resource-output').innerHTML = `<div class="empty-state"><div class="empty-icon">🪄</div><p>Sélectionne des items et clique sur Calculer</p></div>`;
+  document.getElementById('res-count').textContent = '0 ressource';
+}
+
+function calculate() {
+  if (queue.length === 0) { showToast('Aucun item dans la file !', true); return; }
+
+  const totals = {};
+  for (const q of queue) {
+    const recipe = recipes.find(r => r.id === q.id);
+    if (!recipe) continue;
+    for (const ing of recipe.ingredients) {
+      totals[ing.name] = (totals[ing.name] || 0) + ing.qty * q.qty;
+    }
+  }
+
+  const entries = Object.entries(totals).sort((a,b) => b[1]-a[1]);
+  document.getElementById('res-count').textContent = entries.length + ' ressource' + (entries.length !== 1 ? 's' : '');
+
+  if (entries.length === 0) {
+    document.getElementById('resource-output').innerHTML = `<div class="empty-state"><p>Aucune ressource trouvée.</p></div>`;
+    return;
+  }
+
+  document.getElementById('resource-output').innerHTML = `
+    <div class="resource-list">
+      ${entries.map(([name, qty], i) => `
+        <div class="resource-row" style="animation-delay:${i*0.04}s">
+          <span class="res-emoji">${guessEmoji(name)}</span>
+          <div class="res-info">
+            <div class="res-name">${name}</div>
+          </div>
+          <div class="res-qty">×${qty}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="action-bar" style="margin-top:16px;">
+      <button class="btn btn-ghost" onclick="exportExcel()">📊 &nbsp;Exporter Excel</button>
+      <button class="btn btn-ghost" onclick="copyToClipboard()">📋 &nbsp;Copier</button>
+    </div>
+  `;
+  showToast('✅ ' + entries.length + ' ressource(s) calculée(s) !');
+}
+
+function copyToClipboard() {
+  const totals = {};
+  for (const q of queue) {
+    const recipe = recipes.find(r => r.id === q.id);
+    if (!recipe) continue;
+    for (const ing of recipe.ingredients) {
+      totals[ing.name] = (totals[ing.name] || 0) + ing.qty * q.qty;
+    }
+  }
+  const text = Object.entries(totals).sort((a,b)=>b[1]-a[1]).map(([n,q]) => `${q}x ${n}`).join('\n');
+  navigator.clipboard.writeText(text).then(() => showToast('📋 Copié dans le presse-papier !'));
+}
+
+function exportExcel() {
+  const totals = {};
+  for (const q of queue) {
+    const recipe = recipes.find(r => r.id === q.id);
+    if (!recipe) continue;
+    for (const ing of recipe.ingredients) {
+      totals[ing.name] = (totals[ing.name] || 0) + ing.qty * q.qty;
+    }
+  }
+  const rows = [['Ressource','Quantité'], ...Object.entries(totals).sort((a,b)=>b[1]-a[1])];
+  const csv = rows.map(r => r.join(';')).join('\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'craft_dofus.csv';
+  a.click();
+  showToast('📊 Export Excel téléchargé !');
+}
+
+// ══════════════════════════════════════════════
+//  ADMIN TAB
+// ══════════════════════════════════════════════
+function renderAdminList() {
+  const list = document.getElementById('recipe-list-admin');
+  document.getElementById('admin-count').textContent = recipes.length;
+
+  if (recipes.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📜</div><p>Aucune recette</p></div>`;
+    return;
+  }
+
+  list.innerHTML = recipes.map(r => `
+    <div class="recipe-admin-card">
+      <div class="ra-header">
+        <div class="ra-name">
+          <span>${r.emoji || '📦'}</span>
+          <span>${r.name}</span>
+          ${r.category ? `<span class="badge badge-gold">${r.category}</span>` : ''}
+        </div>
+        <div class="ra-actions">
+          <button class="icon-btn edit-b" onclick="editRecipe('${r.id}')" title="Modifier">✏️</button>
+          <button class="icon-btn del" onclick="deleteRecipe('${r.id}')" title="Supprimer">🗑️</button>
+        </div>
+      </div>
+      <div class="ra-count">${r.ingredients.length} ingrédient(s)</div>
+    </div>
+  `).join('');
+}
+
+function addIngRow(name='', qty='') {
+  const builder = document.getElementById('ing-builder');
+  const row = document.createElement('div');
+  row.className = 'ingredient-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Nom de la ressource" value="${name}">
+    <input type="number" min="1" placeholder="Qté" value="${qty}">
+    <button class="del-ing-btn" onclick="this.parentElement.remove()">✕</button>
+  `;
+  builder.appendChild(row);
+}
+
+function resetForm() {
+  editingId = null;
+  document.getElementById('form-title').textContent = '➕ Nouvelle Recette';
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-emoji').value = '';
+  document.getElementById('f-cat').value = '';
+  document.getElementById('ing-builder').innerHTML = '';
+  addIngRow();
+}
+
+function editRecipe(id) {
+  const r = recipes.find(x => x.id === id);
+  if (!r) return;
+  editingId = id;
+  document.getElementById('form-title').textContent = '✏️ Modifier – ' + r.name;
+  document.getElementById('f-name').value = r.name;
+  document.getElementById('f-emoji').value = r.emoji || '';
+  document.getElementById('f-cat').value = r.category || '';
+  document.getElementById('ing-builder').innerHTML = '';
+  r.ingredients.forEach(i => addIngRow(i.name, i.qty));
+  // switch to show form area
+  window.scrollTo({top:0, behavior:'smooth'});
+  showToast('✏️ Modification de ' + r.name);
+}
+
+function deleteRecipe(id) {
+  const r = recipes.find(x => x.id === id);
+  if (!r) return;
+  if (!confirm(`Supprimer la recette "${r.name}" ?`)) return;
+  recipes = recipes.filter(x => x.id !== id);
+  queue = queue.filter(q => q.id !== id);
+  saveRecipes(recipes);
+  renderAdminList();
+  renderItemGrid();
+  renderQueue();
+  showToast('🗑️ Recette supprimée');
+}
+
+function saveRecipe() {
+  const name = document.getElementById('f-name').value.trim();
+  const emoji = document.getElementById('f-emoji').value.trim() || '📦';
+  const category = document.getElementById('f-cat').value.trim();
+
+  if (!name) { showToast('Le nom est requis !', true); return; }
+
+  const rows = document.querySelectorAll('#ing-builder .ingredient-row');
+  const ingredients = [];
+  for (const row of rows) {
+    const inputs = row.querySelectorAll('input');
+    const n = inputs[0].value.trim();
+    const q = parseInt(inputs[1].value);
+    if (n && q > 0) ingredients.push({ name: n, qty: q });
+  }
+
+  if (ingredients.length === 0) { showToast('Ajoute au moins un ingrédient !', true); return; }
+
+  if (editingId) {
+    const idx = recipes.findIndex(r => r.id === editingId);
+    if (idx >= 0) {
+      recipes[idx] = { ...recipes[idx], name, emoji, category, ingredients };
+      showToast('✅ Recette mise à jour !');
+    }
+  } else {
+    const id = name.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'') + '_' + Date.now();
+    recipes.push({ id, name, emoji, category, ingredients });
+    showToast('✅ Recette ajoutée !');
+  }
+
+  saveRecipes(recipes);
+  renderAdminList();
+  renderItemGrid();
+  renderQueue();
+  resetForm();
+}
+
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+function showToast(msg, isError=false) {
+  const toast = document.getElementById('toast');
+  const el = document.createElement('div');
+  el.className = 'toast-msg' + (isError ? ' error' : '');
+  el.textContent = msg;
+  toast.appendChild(el);
+  setTimeout(() => el.remove(), 2900);
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+resetForm();
+renderItemGrid();
+renderQueue();
+</script>
+</body>
+</html>
