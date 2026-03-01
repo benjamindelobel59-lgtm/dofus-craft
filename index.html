@@ -490,7 +490,19 @@ const DEFAULT = [{
   ]
 }];
 
-function load() { try { const s=localStorage.getItem('dofus_v5'); if(s) return JSON.parse(s); } catch(e){} return [...DEFAULT]; }
+function load() {
+  try {
+    // Check current key first, then fallback to older keys
+    for (const key of ['dofus_v5','dofus_craft_v4','dofus_craft_v3']) {
+      const s = localStorage.getItem(key);
+      if (s) {
+        const d = JSON.parse(s);
+        if (d && d.length) return d;
+      }
+    }
+  } catch(e) {}
+  return [...DEFAULT];
+}
 function persist() { localStorage.setItem('dofus_v5', JSON.stringify(recipes)); }
 
 let recipes = load();
@@ -529,10 +541,14 @@ function renderItemGrid() {
 
 function toggleItem(id) {
   const already = queue.findIndex(q=>q.id===id);
-  if (already>=0) return; // already in queue
+  if (already>=0) {
+    showToast('Déjà dans la file !', true);
+    document.getElementById('item-dropdown').style.display='none';
+    document.getElementById('item-search').value='';
+    return;
+  }
   queue.push({id, qty:1});
   renderQueue();
-  // Close dropdown & clear search
   document.getElementById('item-dropdown').style.display='none';
   document.getElementById('item-search').value='';
   showToast('✅ Ajouté à la file !');
@@ -554,7 +570,7 @@ document.getElementById('item-search').addEventListener('input', function() {
 });
 
 document.addEventListener('click', function(e) {
-  if (!e.target.closest('.card-body')) {
+  if (!e.target.closest('#item-search') && !e.target.closest('#item-dropdown')) {
     document.getElementById('item-dropdown').style.display='none';
   }
 });
